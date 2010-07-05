@@ -91,6 +91,13 @@ module Prawn
     # any text
     #
     def text_box(string, options)
+      if options[:inline_format]
+        options.delete(:inline_format)
+        array = Text::Formatted::Parser.to_array(string)
+        formatted_text_box(array, options)
+        return
+      end
+
       Text::Box.new(string, options.merge(:document => self)).render
     end
 
