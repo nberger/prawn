@@ -94,8 +94,7 @@ module Prawn
       if options[:inline_format]
         options.delete(:inline_format)
         array = Text::Formatted::Parser.to_array(string)
-        formatted_text_box(array, options)
-        return
+        return Text::Formatted::Parser.to_string( formatted_text_box(array, options) )
       end
 
       Text::Box.new(string, options.merge(:document => self)).render
