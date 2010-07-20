@@ -38,24 +38,30 @@ module Prawn
         def render
           x,y = @at
           
-          if @overflow == :expand
-            @text = naive_wrap_text
-          else
-            original_y = @document.y
-            fit_text_to_box            
-          end
-          
-          @document.bounding_box([x,@document.bounds.top], 
-            :width => @width, :height => @document.bounds.height) do
-            @document.y = @document.bounds.absolute_bottom + y 
-            @document.text @text
-          end
-          
-          unless @overflow == :expand
-            @document.y = y + @document.bounds.absolute_bottom - @height  
-          end        
+          @document.save_font do
+            @min_font_size = @document.font_size / 2
+            if @overflow == :expand
+              @text = naive_wrap_text
+            elsif @overflow == :shrink_to_fit
+              original_y = @document.y
+              shrink_to_fit(@text)
+            else
+              original_y = @document.y
+              fit_text_to_box            
+            end
+            
+            @document.bounding_box([x,@document.bounds.top], 
+              :width => @width, :height => @document.bounds.height) do
+              @document.y = @document.bounds.absolute_bottom + y 
+              @document.text @text
+            end
+            
+            unless @overflow == :expand
+              @document.y = y + @document.bounds.absolute_bottom - @height  
+            end        
 
-          @excess_text
+            @excess_text
+          end
         end
         
         private        
@@ -81,6 +87,16 @@ module Prawn
         
         def naive_wrap_text
           @document.naive_wrap(@text, @width, @document.font_size)
+        end
+ 
+        # Decrease the font size until the text fits or the min font
+        # size is reached
+        def shrink_to_fit(text)
+          @font_size = @document.font_size
+          while @document.naive_wrap(@text, @width, @document.font_size).lines.to_a.length > 1 && @font_size > @min_font_size
+            @font_size -= 0.5
+            @document.font_size = @font_size
+          end
         end
       end
     end
